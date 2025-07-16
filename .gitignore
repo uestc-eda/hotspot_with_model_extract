@@ -1,2 +1,24 @@
 /hotspot
 /hotfloorplan
+
+# object files
+*.d
+*.o
+*.pyc
+*.a
+
+# emacs temp files
+*~
+
+# test output
+Amatrixcolptr
+Amatrixnzval
+Amatrixrowind
+Bmatrix
+Cmatrix
+Pmatrix*
+*.trace
+
+# VS CODE FILES
+.vscode
+.DS_Store
