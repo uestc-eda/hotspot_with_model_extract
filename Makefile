@@ -17,16 +17,16 @@ ifeq ($(SUPERLU), 1)
 # For Mac, first install with "brew install superlu"
 # For Ubuntu, first install with "sudo apt-get install libsuperlu-dev"
 # default settings for superlu.
-MAC_ARCH = $(shell uname -m) # detect Mac architecture, arm64 for appsilicon, x86-64 for intel
-OS_TYPE = $(shell uname -s) # detect OS, like Linux, Darwin
-ifeq ($(OS_TYPE), 'Linux') # for Linux, not tested yet
+MAC_ARCH := $(shell uname -m) # detect Mac architecture, arm64 for appsilicon, x86-64 for intel
+OS_TYPE := $(shell uname -s) # detect OS, like Linux, Darwin
+ifeq ($(OS_TYPE),Linux ) # for Linux, not tested yet, should put a white space after 'Linux '
 	BLASLIB    	= -lblas
 	SUPERLULIB 	= -lsuperlu
 	SLU_HEADER  = /usr/include/superlu/
 else # for Mac
-	ifeq ($(MAC_ARCH), 'arm64') # for applesilicon Mac (arm64)
+	ifeq ($(MAC_ARCH),arm64 ) # for applesilicon Mac, should put a white space after 'arm64 '
 		SuperLUroot	= /opt/homebrew/opt/superlu
-	else # for intel Mac (x86-64)
+	else # for intel Mac
 		SuperLUroot	= /usr/local
 	endif
 	SUPERLULIB 	= $(SuperLUroot)/lib/libsuperlu.dylib
