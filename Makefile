@@ -13,12 +13,26 @@ SUPERLU = 1
 endif
 
 ifeq ($(SUPERLU), 1)
-#Super LU
-# default set for Mac, with "brew install superlu"
-SuperLUroot	= /opt/homebrew/opt/superlu
-SUPERLULIB 	= $(SuperLUroot)/lib/libsuperlu.dylib
-BLASLIB    	= -L $(SuperLUroot) -lblas
-SLU_HEADER  = $(SuperLUroot)/include
+# Super LU
+# For Mac, first install with "brew install superlu"
+# For Ubuntu, first install with "sudo apt-get install libsuperlu-dev"
+# default settings for superlu.
+MAC_ARCH = $(shell uname -m) # detect Mac architecture, arm64 for appsilicon, x86-64 for intel
+OS_TYPE = $(shell uname -s) # detect OS, like Linux, Darwin
+ifeq ($(OS_TYPE), 'Linux') # for Linux, not tested yet
+	BLASLIB    	= -lblas
+	SUPERLULIB 	= -lsuperlu
+	SLU_HEADER  = /usr/include/superlu/
+else # for Mac
+	ifeq ($(MAC_ARCH), 'arm64') # for applesilicon Mac (arm64)
+		SuperLUroot	= /opt/homebrew/opt/superlu
+	else # for intel Mac (x86-64)
+		SuperLUroot	= /usr/local
+	endif
+	SUPERLULIB 	= $(SuperLUroot)/lib/libsuperlu.dylib
+	BLASLIB    	= -L $(SuperLUroot) -lblas
+	SLU_HEADER  = $(SuperLUroot)/include
+endif
 
 MATHACCEL	= none
 INCDIR		= $(SLU_HEADER)
