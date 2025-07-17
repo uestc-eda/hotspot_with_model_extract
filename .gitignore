@@ -22,3 +22,9 @@ Pmatrix*
 # VS CODE FILES
 .vscode
 .DS_Store
+
+# Matlab matrices
+*.mat
+
+# Log files
+*.log

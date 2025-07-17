@@ -1,8 +1,8 @@
-function [G,C,B] = GCB_model_extract()
+%function [G,C,B] = GCB_model_extract()
 %Get G,C,B matrix from HotSopt
 
-output_path = 'hete_thermal_matrices/';
-name_of_chip = '16_hetecore_3';
+output_path = 'DDR_16core/';
+name_of_chip = 'ddr_16core';
 t_budget = 0.001; 
 
 %Amatrix in HotSpot is G matrix
@@ -36,7 +36,7 @@ B = Bmatrix(:,49:64);
 A = full(B'*(G\B));
 save(strcat(output_path,name_of_chip,'_A.mat'), 'A');
 Ac = full(- (C \ G));
-Bc = full(C \ B) ;
+Bc = full(C \ B);
 Cc = full(B');
 Dc = zeros(size(A,1), size(A,1));
 [~,N,L,~] = c2dm(Ac,Bc,Cc,Dc,t_budget);
@@ -44,4 +44,9 @@ A_bar = L*N;
 
 save(strcat(output_path,name_of_chip,'_A_',string(t_budget*1000),'ms.mat'), 'A_bar');
 
-end
+Pfilename = './power_core.trace';
+P = importdata(Pfilename);
+T_steady = A*(P.data')+308.15
+
+core_temp = A;
+%end
