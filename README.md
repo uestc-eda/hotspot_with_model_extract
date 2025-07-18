@@ -2,15 +2,21 @@
 
 ## Installation
 
-### For MacOS
+### 1. Install superlu, if not installed
 
-1. Install superlu
+For Linux (Ubuntu):
+
+```sh
+sudo apt-get install libsuperlu-dev
+```
+
+For MacOS (both Intel and applesilicon):
 
 ```sh
 brew install superlu
 ```
 
-2. Install HotSpot
+### 2. Install HotSpot
 
 In the path of ```hotspot_with_model_extract```, run:
 
