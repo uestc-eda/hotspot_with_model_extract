@@ -594,3 +594,11 @@ int coo2csc(int size, int nnz,
 
   return 1;
 }
+
+// For 128 channels
+char leakage_vector[257];
+unsigned int leakage[128];
+
+// For 128 channels
+char volt_vector[385];
+unsigned int volt[128];
