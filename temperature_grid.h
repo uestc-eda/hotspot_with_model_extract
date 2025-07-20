@@ -186,8 +186,6 @@ void delete_grid_model(grid_model_t *model);
 /* initialization	*/
 void populate_R_model_grid(grid_model_t *model, flp_t *flp);
 void populate_C_model_grid(grid_model_t *model, flp_t *flp);
-/* added by syc */
-void export_Bmatrix(grid_model_t *model);
 
 /* hotspot main interfaces - temperature.c	*/
 void steady_state_temp_grid(grid_model_t *model, double *power, double *temp);
@@ -214,6 +212,9 @@ void read_power_grid (grid_model_t *model, double *power, char *file);
 double find_max_temp_grid(grid_model_t *model, double *temp);
 double find_avg_temp_grid(grid_model_t *model, double *temp);
 double calc_sink_temp_grid(grid_model_t *model, double *temp, thermal_config_t *config);
+
+/* add to dump B and L matrices */
+int dumpBL(grid_model_t *model);
 
 /* grid_model_vector routines	*/
 /* constructor	*/

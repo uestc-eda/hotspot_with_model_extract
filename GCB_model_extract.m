@@ -29,18 +29,28 @@ Cmatrix = sparse(Cmatrix);
 
 Bmatrix_path = 'Bmatrix';
 Bmatrix = importdata(Bmatrix_path);
+B_row = size(Bmatrix, 1);
+
+Lmatrix_path = 'Lmatrix';
+Lmatrix = importdata(Lmatrix_path);
+L_row = size(Lmatrix, 1);
 
 G = Gmatrix;
 C = Cmatrix;
-B = Bmatrix(:,49:64);
+% Note that row/col indices wrote in Bmatrix/Lmatrix files starts
+% from 0, should +1 here in matlab!
+B = sparse(Bmatrix(1:B_row-1,1)+1, Bmatrix(1:B_row-1,2)+1, Bmatrix(1:B_row-1,3), Bmatrix(B_row,1), Bmatrix(B_row,2));
+B = full(B);
+L = sparse(Lmatrix(1:L_row-1,1)+1, Lmatrix(1:L_row-1,2)+1, Lmatrix(1:L_row-1,3), Lmatrix(L_row,1), Lmatrix(L_row,2));
+%L = L';
 A = full(B'*(G\B));
 save(strcat(output_path,name_of_chip,'_A.mat'), 'A');
 Ac = full(- (C \ G));
 Bc = full(C \ B);
 Cc = full(B');
 Dc = zeros(size(A,1), size(A,1));
-[~,N,L,~] = c2dm(Ac,Bc,Cc,Dc,t_budget);
-A_bar = L*N;
+[~,N,Ld,~] = c2dm(Ac,Bc,Cc,Dc,t_budget);
+A_bar = Ld*N;
 
 save(strcat(output_path,name_of_chip,'_A_',string(t_budget*1000),'ms.mat'), 'A_bar');
 

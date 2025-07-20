@@ -233,62 +233,86 @@ double blist_avg(blist_t *ptr, flp_t *flp, double *v, int type)
   return val;		   
 }
 
-/* export the B matrix added by syc */
-void export_Bmatrix(grid_model_t *model)
+/* Dump the B matrix and L matrix. 
+B matrix only contains the unit blocks in layers with power. 
+L matrix (actually L transpose here) includes unit blocks in all layers.
+The code is formulating B/L column by column (layer by layer), 
+so it can be further easiliy modified to dump any layers if needed.
+Note that row/col indices wrote in Bmatrix/Lmatrix files starts from 0,
+should +1 if post-process using matlab! */
+int dumpBL(grid_model_t *model)
 {
-  int i, j, n, m = 0;
-  double area;
-  blist_t *blist = NULL;
-  int extra_nodes = 0;
- 
+  // iterators for each layer and each unit block
+  int layer, blk;
+  // row and column index (i.e., the x, y index) of a unit block in the floorplan grid
+  int blk_row, blk_col;
+  // the row and column index in the B/L matrix
+  int elem_row, b_elem_col, l_elem_col;
+  // value of the B/L matrix nonzero element
+  double elem_val;
+  // number of the package thermal nodes that do not belong to the grid, located at the end of temperature vector
+  int extra_nodes;
+  
   if (model->config.model_secondary)
     extra_nodes = EXTRA + EXTRA_SEC;
   else
     extra_nodes = EXTRA;
 
-  FILE *fp = fopen("Bmatrix", "w");
-
-  int unit_count = 0;
   /* area of a single grid cell	*/
-  area = (model->width * model->height) / (model->cols * model->rows);
-  for(n=0; n < model->n_layers; n++) 
-  {
-    for(i=0; i < model->rows; i++) 
-    {
-      for(j=0; j < model->cols; j++) 
-      {
-        blist = model->layers[n].b2gmap[i][j];
-        for(m=0; m < model->total_n_blocks; m++) 
-        {
-          if (blist != NULL && m - unit_count == blist->idx) 
-          {
-            fprintf(fp, "%.6f\t", blist->occupancy * area / (model->layers[n].flp->units[m - unit_count].width * 
-                                                            model->layers[n].flp->units[m - unit_count].height));
-            blist = blist->next;
-          }
-          else 
-          {
-            fprintf(fp, "0.000000\t");
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    }
-    unit_count += model->layers[n].flp->n_units;
-  }
+  double area = (model->width * model->height) / (model->cols * model->rows);
 
-  for(n=0; n < extra_nodes; n++) 
-  {
-    for(m=0; m < model->total_n_blocks; m++) 
-    {
-      fprintf(fp, "0.000000\t");
-    }
-    fprintf(fp, "\n");
-  }
-  fclose(fp);
-  // printf("Bmatrix file created\n");
-}
+  FILE *bfile = fopen("Bmatrix", "w");
+  FILE *lfile = fopen("Lmatrix", "w");
 
+  // Form B and L matrices column by column. Units in layers with no power only appear in L.
+  b_elem_col = 0;
+  l_elem_col = 0;
+  for (layer=0; layer < model->n_layers; layer++)// for each layer
+    {
+      for (blk = 0; blk < model-> layers[layer].flp->n_units; blk++)// for each unit block in the layer
+	{
+	  // for each grid in the unit block, compute its elem_row and elem_val in B/L matrix
+	  for (blk_row = model-> layers[layer].g2bmap[blk].i1; blk_row < model-> layers[layer].g2bmap[blk].i2; blk_row++)
+	    {
+	      for (blk_col = model-> layers[layer].g2bmap[blk].j1; blk_col < model-> layers[layer].g2bmap[blk].j2; blk_col++)
+		{
+		  // elem_row is the grid cell's 1-D index of the x-y 2-D grid
+		  elem_row = layer*model->cols*model->rows + blk_row*model->rows + blk_col;
+		  // elem_val is the grid cell's area ratio in the block it belongs to
+		  elem_val = model->layers[layer].b2gmap[blk_row][blk_col]->occupancy * area / (model->layers[layer].flp->units[blk].width * 
+											     model->layers[layer].flp->units[blk].height);
+		  if (model->layers[layer].has_power) // only process layers with power for B
+		    {
+		      // Write to Bmatrix file. Note the row/col index starts at 0, should +1 if post-process in matlab
+		      fprintf(bfile, "%d\t%d\t%.6f\n", elem_row, b_elem_col, elem_val);
+		      // printf("row: %d col: %d b_col: %d b_row: %d b_val: %.6f\n", blk_row, blk_col, elem_row, b_elem_col, elem_val);
+		    }
+		  // process all layers for L
+		  // Write to Lmatrix file. Note the row/col index starts at 0, should +1 if post-process in matlab
+		  fprintf(lfile, "%d\t%d\t%.6f\n", elem_row, l_elem_col, elem_val);
+		  // printf("row: %d col: %d l_col: %d l_row: %d l_val: %.6f\n", blk_row, blk_col, elem_row, l_elem_col, elem_val);
+		}
+	    }
+	  if (model->layers[layer].has_power) // only process layers with power for B
+	    b_elem_col++; // in the layer with power, one unit block taks one column in B
+	  l_elem_col++; // one unit block in all layers taks one column in L
+	}
+    }
+  // The total row number of B and L, should add extra_nodes which represents package nodes
+  // that do not belong to the grid, located at the end of temperature vector
+  int tot_mat_row = model->cols * model->rows * model->n_layers + extra_nodes;
+  // Write the matrix size at the end of file for sparse matrix construction process (next in matlab or python)
+  fprintf(bfile, "%d\t%d\t0\n", tot_mat_row, b_elem_col);
+  fprintf(lfile, "%d\t%d\t0\n", tot_mat_row, l_elem_col);
+  // printf("tot row: %d, tot B col: %d, tot L col: %d\n", tot_mat_row, b_elem_col, l_elem_col);
+
+  fclose(bfile);
+  fclose(lfile);
+
+  return 0;
+}	  
+
+  
 /* setup the block and grid mapping data structures	*/
 void set_bgmap(grid_model_t *model, layer_t *layer)
 {
@@ -1042,8 +1066,9 @@ void populate_C_model_grid(grid_model_t *model, flp_t *flp)
   model->c_ready = TRUE;
   // printf("layers=%d, rows=%d, cols=%d, blocks=%d",
   //        model->n_layers, model->rows, model->cols, model->total_n_blocks);
-  // added by syc
-  export_Bmatrix(model);
+
+  // added to dump B and L
+  dumpBL(model);
 }
 
 /* destructor	*/
