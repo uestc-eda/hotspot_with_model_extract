@@ -261,8 +261,8 @@ int dumpBL(grid_model_t *model)
   /* area of a single grid cell	*/
   double area = (model->width * model->height) / (model->cols * model->rows);
 
-  FILE *bfile = fopen("Bmatrix", "w");
-  FILE *lfile = fopen("Lmatrix", "w");
+  FILE *bfile = fopen("./model_extract/Bmatrix", "w");
+  FILE *lfile = fopen("./model_extract/Lmatrix", "w");
 
   // Form B and L matrices column by column. Units in layers with no power only appear in L.
   b_elem_col = 0;
@@ -3321,7 +3321,7 @@ void slope_fn_grid(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   }
 
   FILE *fprCmatrix;
-  fprCmatrix = fopen("Cmatrix", "wa");
+  fprCmatrix = fopen("./model_extract/Cmatrix", "wa");
   FILE *fprPmatrix;
   fprPmatrix = fopen("Pmatrix", "wa");
 
@@ -5048,9 +5048,9 @@ void dumpA(char *what, SuperMatrix *A)
   FILE *fprrowind;
   FILE *fprcolptr;
   FILE *fprnzval;
-  fprrowind = fopen("Amatrixrowind", "wa");
-  fprcolptr = fopen("Amatrixcolptr", "wa");
-  fprnzval = fopen("Amatrixnzval", "wa");
+  fprrowind = fopen("./model_extract/Amatrixrowind", "wa");
+  fprcolptr = fopen("./model_extract/Amatrixcolptr", "wa");
+  fprnzval = fopen("./model_extract/Amatrixnzval", "wa");
   printf("\nCompCol matrix %s:\n", what);
   printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype, A->Dtype, A->Mtype);
   n = A->ncol;
