@@ -16,7 +16,7 @@ function [G,C,B,L] = gcbl_gen()
   G = sparse(Gmatrixrowind,Gmatrixcolind,Gmatrixnzval);
 
   Cmatrix = importdata('Cmatrix');
-  C = spdiag(Cmatrix);
+  C = spdiags(Cmatrix, 0, length(Cmatrix), length(Cmatrix));
 
   Bmatrix = importdata('Bmatrix');
   B_row = size(Bmatrix, 1);
