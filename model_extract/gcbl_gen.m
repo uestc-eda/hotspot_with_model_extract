@@ -5,19 +5,18 @@ function [G,C,B,L] = gcbl_gen()
   Gmatrixcolptr = importdata('Amatrixcolptr');
   Gmatrixnzval = importdata('Amatrixnzval');
   Gmatrixrowind = importdata('Amatrixrowind');
-  NEWGmatrixcolptr=[];
+  Gmatrixcolind=[];
   All_grids = length(Gmatrixcolptr)-1;
   for i=1:All_grids
     for j=1:Gmatrixcolptr(i+1)-Gmatrixcolptr(i)
-      NEWGmatrixcolptr = [NEWGmatrixcolptr, i];
+      Gmatrixcolind = [Gmatrixcolind, i];
     end
   end
   Gmatrixrowind = (Gmatrixrowind + 1)';
-  Gmatrix = sparse(Gmatrixrowind,NEWGmatrixcolptr,Gmatrixnzval);
+  G = sparse(Gmatrixrowind,Gmatrixcolind,Gmatrixnzval);
 
   Cmatrix = importdata('Cmatrix');
-  Cmatrix = diag(Cmatrix);
-  Cmatrix = sparse(Cmatrix);
+  C = spdiag(Cmatrix);
 
   Bmatrix = importdata('Bmatrix');
   B_row = size(Bmatrix, 1);
@@ -25,8 +24,6 @@ function [G,C,B,L] = gcbl_gen()
   Lmatrix = importdata('Lmatrix');
   L_row = size(Lmatrix, 1);
 
-  G = Gmatrix;
-  C = Cmatrix;
   %% Note that row/col indices wrote in Bmatrix/Lmatrix files starts
   %% from 0, should +1 here in matlab!
   B = sparse(Bmatrix(1:B_row-1,1)+1, Bmatrix(1:B_row-1,2)+1, Bmatrix(1:B_row-1,3), Bmatrix(B_row,1), Bmatrix(B_row,2));
