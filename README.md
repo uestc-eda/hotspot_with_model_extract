@@ -1,5 +1,9 @@
 # HotSpot with Thermal Model Extraction
 
+HotSpot with Thermal Model Extraction is a tool that extracts thermal model matrices from HotSpot. Such extracted matrices G, C, B, L, A, A\_bar can be used in other tools or simulators. 
+
+See [here](https://wanghaiuestc.github.io) for more opensource softwares from my group. 
+
 ## Installation
 
 ### 1. Install superlu, if not installed
