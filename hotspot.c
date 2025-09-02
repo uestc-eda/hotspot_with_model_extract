@@ -551,6 +551,8 @@ for (i = 0; i < length_v; ++i)
 
   if (do_transient)
     populate_C_model(model, flp);
+  else
+    printf("warning: C matrix will NOT be dumped in steady state simulation. Enable transient simulation to dump C matrix!\n");
 
 #if VERBOSE > 2
   debug_print_model(model);
@@ -765,7 +767,6 @@ for (i = 0; i < length_v; ++i)
 
   /* print steady state results	*/
   //BU_3D: Only print steady state results to stdout when DEBUG3D flag is not set
-    // printf(" HERE 1\n");
 #if DEBUG3D < 1
 // printf("Value=%d\n",model->config->steady_state_print_disable);
  if(model->config->steady_state_print_disable == 0) {
@@ -778,7 +779,6 @@ for (i = 0; i < length_v; ++i)
   if (strcmp(model->config->steady_file, NULLFILE))
     dump_temp(model, steady_temp, model->config->steady_file);
 
-  // printf(" HERE 2\n");
   /* for the grid model, optionally dump the most recent 
    * steady state temperatures of the grid cells	
    */
@@ -786,7 +786,6 @@ for (i = 0; i < length_v; ++i)
       strcmp(model->config->grid_steady_file, NULLFILE))
     dump_steady_temp_grid(model->grid, model->config->grid_steady_file);
 
-  // printf(" HERE 3\n");
 #if VERBOSE > 2
   if (model->type == BLOCK_MODEL) {
       if (do_transient) {
@@ -804,11 +803,6 @@ for (i = 0; i < length_v; ++i)
       dump_dvector(steady_temp, model->grid->total_n_blocks + EXTRA);
   }
 #endif
-
-  fprintf(stdout, "Dumping transient temperatures for init in file %s\n", model->config->all_transient_file);
-  fprintf(stdout, "Unit\tSteady(Kelvin)\n");
-  dump_temp(model, temp, model->config->all_transient_file);
-
 
   /* cleanup	*/
   fclose(pin);

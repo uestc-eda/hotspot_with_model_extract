@@ -309,6 +309,9 @@ int dumpBL(grid_model_t *model)
   fclose(bfile);
   fclose(lfile);
 
+  printf("Bmatrix dumped\n");
+  printf("Lmatrix dumped\n");
+  
   return 0;
 }	  
 
@@ -1064,11 +1067,6 @@ void populate_C_model_grid(grid_model_t *model, flp_t *flp)
 
   /* done	*/	
   model->c_ready = TRUE;
-  // printf("layers=%d, rows=%d, cols=%d, blocks=%d",
-  //        model->n_layers, model->rows, model->cols, model->total_n_blocks);
-
-  // added to dump B and L
-  dumpBL(model);
 }
 
 /* destructor	*/
@@ -5070,7 +5068,7 @@ void dumpA(char *what, SuperMatrix *A)
   fclose(fprrowind);
   fclose(fprcolptr);
   fclose(fprnzval);
-  // printf("A matrix created\n");
+  printf("Amatrix (Amatrixrowind, Amatrixcolptr, Amatrixnzval) dumped\n");
 }
 
 // void dumpB(char *what, SuperMatrix *A)
@@ -5123,10 +5121,11 @@ void direct_SLU(grid_model_t *model, grid_model_vector_t *power, grid_model_vect
     dim = nl*nr*nc + EXTRA;
 
   A = build_steady_grid_matrix(model);
-  // added by Huang
-  dumpA("A", &A);
   B = build_steady_rhs_vector(model, power, &rhs);
-  // dumpB("B", &B);
+  
+  // Added to dump A, B, and L matrices
+  dumpA("A", &A);
+  dumpBL(model);
 
   if ( !(perm_r = intMalloc(dim)) ) fatal("Malloc fails for perm_r[].\n");
   if ( !(perm_c = intMalloc(dim)) ) fatal("Malloc fails for perm_c[].\n");
