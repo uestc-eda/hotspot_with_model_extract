@@ -1,5 +1,6 @@
-function [G,C,B,L] = gcbl_gen()
+function [G,C,B,L] = gcbl_gen(method)
   %% Generate and save G, C, B, L matrices from the HotSopt dumped matrices
+  %% method should be 'steady' or 'transient'
 
   %% Amatrix in HotSpot is G matrix
   Gmatrixcolptr = importdata('Amatrixcolptr');
@@ -15,8 +16,12 @@ function [G,C,B,L] = gcbl_gen()
   Gmatrixrowind = (Gmatrixrowind + 1)';
   G = sparse(Gmatrixrowind,Gmatrixcolind,Gmatrixnzval);
 
-  Cmatrix = importdata('Cmatrix');
-  C = spdiags(Cmatrix, 0, length(Cmatrix), length(Cmatrix));
+  if strcmp(method,'transient')
+    Cmatrix = importdata('Cmatrix');
+    C = spdiags(Cmatrix, 0, length(Cmatrix), length(Cmatrix));
+  elseif strcmp(method,'steady')
+    C = sparse(0,0); % create a dummy matrix for return
+  end
 
   Bmatrix = importdata('Bmatrix');
   B_row = size(Bmatrix, 1);
@@ -31,7 +36,9 @@ function [G,C,B,L] = gcbl_gen()
   L = L';
 
   save('G.mat', 'G');
-  save('C.mat', 'C');
   save('B.mat', 'B');
   save('L.mat', 'L');
+  if strcmp(method,'transient')
+    save('C.mat', 'C');
+  end
 end

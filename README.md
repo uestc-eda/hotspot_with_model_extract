@@ -53,9 +53,17 @@ including the ones without power.
 
 In Matlab command window, go to the path ```hotspot_with_model_extract/model_extract```, run
 
+For transient (if the hotspot run in step 1 is a transient simulation, as in the given example):
+
 ```sh
-model_extract
+model_extract('transient')
+```
+
+or for steady state (if the hotspot run in step 1 is a steady state simulation):
+
+```sh
+model_extract('steady')
 ```
 
 Now, in the folder ```hotspot_with_model_extract/model_extract```,
-you should see the newly generated G, C, B, L files: G.mat, C.mat, B.mat, L.mat. There are also two new files generated for tools like GDP: A.mat, A\_xxms.mat. Here A.mat is the A matrix and A\_xxms.mat (default is A\_1ms.mat) is the A\_bar matrix in the GDP paper.
+you should see the newly generated G, C (for transient only), B, L files: G.mat, C.mat, B.mat, L.mat. There are also two new files generated for tools like GDP: A.mat, A\_xxms.mat (for transient only). Here A.mat is the A matrix and A\_xxms.mat (default is A\_1ms.mat) is the A\_bar matrix in the GDP paper.
