@@ -92,16 +92,13 @@ void usage(int argc, char **argv)
 void global_config_from_strs(global_config_t *config, str_pair *table, int size)
 {
   int idx;
-  // if ((idx = get_str_index(table, size, "f")) >= 0) {
-  //     if(sscanf(table[idx].value, "%s", config->flp_file) != 1)
-  //       fatal("invalid format for configuration  parameter flp_file\n");
-  // } else {
-  //     fatal("required parameter flp_file missing. check usage\n");
-  // }
-
-  if ((idx = get_str_index(table, size, "grid_layer_file")) < 0)
-      fatal("required parameter grid_layer_file missing. check usage\n");
-
+  if ((idx = get_str_index(table, size, "f")) >= 0) {
+      if(sscanf(table[idx].value, "%s", config->flp_file) != 1)
+        fatal("invalid format for configuration  parameter flp_file\n");
+  } else {
+    // If an LCF file is specified, an FLP file is not required
+    strcpy(config->flp_file, NULLFILE);
+  }
   if ((idx = get_str_index(table, size, "p")) >= 0) {
       if(sscanf(table[idx].value, "%s", config->p_infile) != 1)
         fatal("invalid format for configuration  parameter p_infile\n");
@@ -121,8 +118,6 @@ void global_config_from_strs(global_config_t *config, str_pair *table, int size)
       strcpy(config->t_outfile, NULLFILE);
   }
   if ((idx = get_str_index(table, size, "c")) >= 0) {
-      // printf("idx = %u\n", idx);
-      // printf("table[idx].value = %s\n", table[idx].value);
       if(sscanf(table[idx].value, "%s", config->config) != 1)
         fatal("invalid format for configuration  parameter config\n");
   } else {
@@ -434,39 +429,39 @@ int main(int argc, char **argv)
 
   // printf("LOKESH leakage_vector: %s, length = %d",leakage_vector, strlen(leakage_vector));
   int length_lv = strlen(leakage_vector);	
-for (i = 0; i < (length_lv/2); ++i)
+  for (i = 0; i < (length_lv/2); ++i)
     leakage[i] = 1;
-
-for (i = 0; i < length_lv; ++i)
-{
-
-  if (leakage_vector[i] == '0')
-    leakage[(int)i/2] = 0;
-  if (leakage_vector[i] == '1')
-    leakage[(int)i/2] = 1;
-  if (leakage_vector[i] == ',')
-    continue;
-}
+  
+  for (i = 0; i < length_lv; ++i)
+    {
+      
+      if (leakage_vector[i] == '0')
+	leakage[(int)i/2] = 0;
+      if (leakage_vector[i] == '1')
+	leakage[(int)i/2] = 1;
+      if (leakage_vector[i] == ',')
+	continue;
+    }
 
 
   int length_v = strlen(volt_vector);
-//  printf("length_v = %d\n", length_v);  
-
-//for (i = 0; i < (int)(length_v+1)/4; ++i)
-for (i = 0; i < 4; ++i)
+  //  printf("length_v = %d\n", length_v);  
+  
+  //for (i = 0; i < (int)(length_v+1)/4; ++i)
+  for (i = 0; i < 4; ++i)
     volt[i] = 10;
-
-for (i = 0; i < length_v; ++i)
-{
-  if (i==2)
-  {
-    volt[0] = 10 * (volt_vector[0] - '0') + (volt_vector[2] - '0');
-    continue;
-  }
-  if (i>2 && volt_vector[i-3] == ',')
-//    printf ("i = %d", i);
-    volt[(int)i/4] = 10 * (volt_vector[i-2] - '0') + (volt_vector[i] - '0');      
-}
+  
+  for (i = 0; i < length_v; ++i)
+    {
+      if (i==2)
+	{
+	  volt[0] = 10 * (volt_vector[0] - '0') + (volt_vector[2] - '0');
+	  continue;
+	}
+      if (i>2 && volt_vector[i-3] == ',')
+	//    printf ("i = %d", i);
+	volt[(int)i/4] = 10 * (volt_vector[i-2] - '0') + (volt_vector[i] - '0');      
+    }
 
 
 
@@ -532,11 +527,19 @@ for (i = 0; i < length_v; ++i)
    * parameter is overridden by the layer configuration 
    * file in the grid model when the latter is specified.
    */
-
-  // flp = read_flp(global_config.flp_file, FALSE);
-  // LOKESH
-  printf("flp_file= %s\n", global_config.flp_file);
-  printf("do_detailed_3D= %d\n", do_detailed_3D);
+  if(strcmp(thermal_config.grid_layer_file, NULLFILE)) {
+    flp = NULL;
+    if(strcmp(global_config.flp_file, NULLFILE)) {
+      fprintf(stderr, "Warning: Layer Configuration File %s specified. Overriding floorplan file %s\n", thermal_config.grid_layer_file, global_config.flp_file);
+    }
+  }
+  else if(strcmp(global_config.flp_file, NULLFILE)) {
+    flp = read_flp(global_config.flp_file, FALSE);
+  }
+  else {
+    fatal("Either LCF or FLP file must be specified\n");
+  }
+  //flp = read_flp(global_config.flp_file, FALSE);
 
   //BU_3D: added do_detailed_3D to alloc_RC_model. Detailed 3D modeling can only be used with grid-level modeling.
   /* allocate and initialize the RC model	*/
@@ -552,7 +555,7 @@ for (i = 0; i < length_v; ++i)
   if (do_transient)
     populate_C_model(model, flp);
   else
-    printf("warning: C matrix will NOT be dumped in steady state simulation. Enable transient simulation to dump C matrix!\n");
+    printf("warning: C matrix will NOT be dumped in steady state simulation. Ignore if you do not need C matrix. Otherwise, enable transient simulation!\n");
 
 #if VERBOSE > 2
   debug_print_model(model);
@@ -809,7 +812,8 @@ for (i = 0; i < length_v; ++i)
   if (do_transient)
     fclose(tout);
   delete_RC_model(model);
-  //free_flp(flp, FALSE);
+  if(!model->grid->has_lcf)
+    free_flp(flp, FALSE);
   if (do_transient)
     free_dvector(temp);
   free_dvector(power);

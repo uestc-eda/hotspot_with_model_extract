@@ -310,7 +310,7 @@ int dumpBL(grid_model_t *model)
   fclose(lfile);
 
   printf("Bmatrix dumped\n");
-  printf("Lmatrix dumped\n");
+  printf("Lmatrix dumped\n\n");
   
   return 0;
 }	  
@@ -821,7 +821,6 @@ void populate_layers_grid(grid_model_t *model, flp_t *flp_default)
   /* read in values from the lcf when specified	*/
   if (model->has_lcf) {
       parse_layer_file(model, fp);
-      warning("layer configuration file specified. overriding default floorplan with those in lcf file...\n");
   } else {
       /* default set of layers	*/
       populate_default_layers(model, flp_default);
@@ -1990,9 +1989,6 @@ void xlate_vector_b2g(grid_model_t *model, double *b, grid_model_vector_t *g, in
 
   /* area of a single grid cell	*/
   area = (model->width * model->height) / (model->cols * model->rows);
-  printf("area:%.16f\n",area);
-  FILE *fprPmatrix3;
-  fprPmatrix3 = fopen("Pmatrix3", "wa");
 
   for(n=0; n < model->n_layers; n++) {
       for(i=0; i < model->rows; i++)
@@ -2011,8 +2007,6 @@ void xlate_vector_b2g(grid_model_t *model, double *b, grid_model_vector_t *g, in
                                              model->layers[n].flp, &b[base], type);
             else
               fatal("unknown vector type\n");
-
-            fprintf(fprPmatrix3, "%.10f\n", g->cuboid[n][i][j]);
         }
       /* keep track of the beginning address of this layer in the 
        * block power vector
@@ -2021,12 +2015,8 @@ void xlate_vector_b2g(grid_model_t *model, double *b, grid_model_vector_t *g, in
   }
 
   /* extra spreader and sink nodes	*/
-  for(i=0; i < extra_nodes; i++){
+  for(i=0; i < extra_nodes; i++)
     g->extra[i] = b[base+i];
-    fprintf(fprPmatrix3, "%.10f\n", g->extra[i]);
-  }
-  fprintf(fprPmatrix3, "\n");
-  fclose(fprPmatrix3);
 }
 
 /* translate temperature between grid and block vectors	*/
@@ -3016,13 +3006,9 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   /* pointer to the starting address of the extra nodes	*/
   double *x = v + nl*nr*nc;
 
-  FILE *fprPmatrix2;
-  fprPmatrix2 = fopen("Pmatrix2", "wa");
-
   spidx = nl - DEFAULT_PACK_LAYERS + LAYER_SP;
   hsidx = nl - DEFAULT_PACK_LAYERS + LAYER_SINK;
-  if (model_secondary)
-  {
+  if (model_secondary) {
     subidx = LAYER_SUB;
     solderidx = LAYER_SOLDER;
     pcbidx = LAYER_PCB;
@@ -3031,21 +3017,17 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   /* sink outer north/south	*/
   psum = (c->ambient - x[SINK_N]) / (pk->r_hs_per + pk->r_amb_per) +
          (x[SINK_C_N] - x[SINK_N]) / (pk->r_hs2_y + pk->r_hs);
-  fprintf(fprPmatrix2, "10\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_N] = psum / (pk->c_hs_per + pk->c_amb_per);
   psum = (c->ambient - x[SINK_S]) / (pk->r_hs_per + pk->r_amb_per) +
          (x[SINK_C_S] - x[SINK_S]) / (pk->r_hs2_y + pk->r_hs);
-  fprintf(fprPmatrix2, "11\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_S] = psum / (pk->c_hs_per + pk->c_amb_per);
 
   /* sink outer west/east	*/
   psum = (c->ambient - x[SINK_W]) / (pk->r_hs_per + pk->r_amb_per) +
          (x[SINK_C_W] - x[SINK_W]) / (pk->r_hs2_x + pk->r_hs);
-  fprintf(fprPmatrix2, "8\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_W] = psum / (pk->c_hs_per + pk->c_amb_per);
   psum = (c->ambient - x[SINK_E]) / (pk->r_hs_per + pk->r_amb_per) +
          (x[SINK_C_E] - x[SINK_E]) / (pk->r_hs2_x + pk->r_hs);
-  fprintf(fprPmatrix2, "9\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_E] = psum / (pk->c_hs_per + pk->c_amb_per);
 
   /* sink inner north/south	*/
@@ -3057,7 +3039,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   psum += (c->ambient - x[SINK_C_N]) / (pk->r_hs_c_per_y + pk->r_amb_c_per_y) +
           (x[SP_N] - x[SINK_C_N]) / pk->r_sp_per_y +
           (x[SINK_N] - x[SINK_C_N]) / (pk->r_hs2_y + pk->r_hs);
-  fprintf(fprPmatrix2, "6\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_C_N] = psum / (pk->c_hs_c_per_y + pk->c_amb_c_per_y);
 
   psum = 0.0;
@@ -3067,7 +3048,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   psum += (c->ambient - x[SINK_C_S]) / (pk->r_hs_c_per_y + pk->r_amb_c_per_y) +
           (x[SP_S] - x[SINK_C_S]) / pk->r_sp_per_y +
           (x[SINK_S] - x[SINK_C_S]) / (pk->r_hs2_y + pk->r_hs);
-  fprintf(fprPmatrix2, "7\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_C_S] = psum / (pk->c_hs_c_per_y + pk->c_amb_c_per_y);
 
   /* sink inner west/east	*/
@@ -3079,7 +3059,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   psum += (c->ambient - x[SINK_C_W]) / (pk->r_hs_c_per_x + pk->r_amb_c_per_x) +
           (x[SP_W] - x[SINK_C_W]) / pk->r_sp_per_x +
           (x[SINK_W] - x[SINK_C_W]) / (pk->r_hs2_x + pk->r_hs);
-  fprintf(fprPmatrix2, "4\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_C_W] = psum / (pk->c_hs_c_per_x + pk->c_amb_c_per_x);
 
   psum = 0.0;
@@ -3089,7 +3068,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
   psum += (c->ambient - x[SINK_C_E]) / (pk->r_hs_c_per_x + pk->r_amb_c_per_x) +
           (x[SP_E] - x[SINK_C_E]) / pk->r_sp_per_x +
           (x[SINK_E] - x[SINK_C_E]) / (pk->r_hs2_x + pk->r_hs);
-  fprintf(fprPmatrix2, "5\t%.10f\n", psum);
   dv[nl * nr * nc + SINK_C_E] = psum / (pk->c_hs_c_per_x + pk->c_amb_c_per_x);
 
   /* spreader north/south	*/
@@ -3099,7 +3077,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
     psum += (A3D(v, spidx, 0, j, nl, nr, nc) - x[SP_N]);
   psum /= (l[spidx].ry / 2.0 + nc * pk->r_sp1_y);
   psum += (x[SINK_C_N] - x[SP_N]) / pk->r_sp_per_y;
-  fprintf(fprPmatrix2, "2\t%.10f\n", psum);
   dv[nl * nr * nc + SP_N] = psum / pk->c_sp_per_y;
 
   psum = 0.0;
@@ -3107,7 +3084,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
     psum += (A3D(v, spidx, nr - 1, j, nl, nr, nc) - x[SP_S]);
   psum /= (l[spidx].ry / 2.0 + nc * pk->r_sp1_y);
   psum += (x[SINK_C_S] - x[SP_S]) / pk->r_sp_per_y;
-  fprintf(fprPmatrix2, "3\t%.10f\n", psum);
   dv[nl * nr * nc + SP_S] = psum / pk->c_sp_per_y;
 
   /* spreader west/east	*/
@@ -3117,7 +3093,6 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
     psum += (A3D(v, spidx, i, 0, nl, nr, nc) - x[SP_W]);
   psum /= (l[spidx].rx / 2.0 + nr * pk->r_sp1_x);
   psum += (x[SINK_C_W] - x[SP_W]) / pk->r_sp_per_x;
-  fprintf(fprPmatrix2, "0\t%.10f\n", psum);
   dv[nl * nr * nc + SP_W] = psum / pk->c_sp_per_x;
 
   psum = 0.0;
@@ -3125,10 +3100,7 @@ void slope_fn_pack(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
     psum += (A3D(v, spidx, i, nc - 1, nl, nr, nc) - x[SP_E]);
   psum /= (l[spidx].rx / 2.0 + nr * pk->r_sp1_x);
   psum += (x[SINK_C_E] - x[SP_E]) / pk->r_sp_per_x;
-  fprintf(fprPmatrix2, "1\t%.10f\n", psum);
   dv[nl * nr * nc + SP_E] = psum / pk->c_sp_per_x;
-  fprintf(fprPmatrix2, "\n");
-  fclose(fprPmatrix2);
 
   if (model_secondary) {
       /* PCB outer north/south	*/
@@ -3320,9 +3292,8 @@ void slope_fn_grid(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
 
   FILE *fprCmatrix;
   fprCmatrix = fopen("./model_extract/Cmatrix", "wa");
-  FILE *fprPmatrix;
-  fprPmatrix = fopen("Pmatrix", "wa");
-
+  
+  /* for each grid cell	*/
   for (n = 0; n < nl; n++)
     for (i = 0; i < nr; i++)
       for (j = 0; j < nc; j++)
@@ -3436,9 +3407,7 @@ void slope_fn_grid(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
           fprintf(fprCmatrix,"%.10f\n",l[n].c);
         }
         
-        fprintf(fprPmatrix, "%.10f\n", psum);
-
-        /* update the current cell's temperature	*/
+         /* update the current cell's temperature	*/
         if (model->config.detailed_3D_used == 1) //BU_3D: use find_cap_3D is detailed_3D model is used.
           A3D(dv, n, i, j, nl, nr, nc) = (p->cuboid[n][i][j] + psum) / find_cap_3D(n, i, j, model);
         else
@@ -3478,15 +3447,11 @@ void slope_fn_grid(grid_model_t *model, double *v, grid_model_vector_t *p, doubl
     fprintf(fprCmatrix, "%.10f\n", pk->c_pcb_per + pk->c_amb_sec_per);          //27
     fprintf(fprCmatrix, "\n");
     fclose(fprCmatrix);
-    fprintf(fprPmatrix, "\n");
-    fclose(fprPmatrix);
   }
   else
   {  
     fprintf(fprCmatrix, "\n");
     fclose(fprCmatrix);
-    fprintf(fprPmatrix, "\n");
-    fclose(fprPmatrix);
   }
   /* for each grid cell	*/
   slope_fn_pack(model, v, p, dv);
@@ -5049,12 +5014,12 @@ void dumpA(char *what, SuperMatrix *A)
   fprrowind = fopen("./model_extract/Amatrixrowind", "wa");
   fprcolptr = fopen("./model_extract/Amatrixcolptr", "wa");
   fprnzval = fopen("./model_extract/Amatrixnzval", "wa");
-  printf("\nCompCol matrix %s:\n", what);
-  printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype, A->Dtype, A->Mtype);
+  // printf("\nCompCol matrix %s:\n", what);
+  // printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype, A->Dtype, A->Mtype);
   n = A->ncol;
   Astore = (NCformat *)A->Store;
   dp = (double *)Astore->nzval;
-  printf("nrow %d, ncol %d, nnz %d\n", A->nrow, A->ncol, Astore->nnz);
+  // printf("nrow %d, ncol %d, nnz %d\n", A->nrow, A->ncol, Astore->nnz);
 
   for (i = 0; i < Astore->colptr[n]; ++i)
     fprintf(fprrowind, "%d\n", Astore->rowind[i]);
@@ -5064,7 +5029,7 @@ void dumpA(char *what, SuperMatrix *A)
 
   for (i = 0; i < Astore->colptr[n]; ++i)
     fprintf(fprnzval, "%.10f\n", dp[i]);
-  printf("\n");
+  //printf("\n");
   fclose(fprrowind);
   fclose(fprcolptr);
   fclose(fprnzval);
@@ -5124,6 +5089,8 @@ void direct_SLU(grid_model_t *model, grid_model_vector_t *power, grid_model_vect
   B = build_steady_rhs_vector(model, power, &rhs);
   
   // Added to dump A, B, and L matrices
+  printf("\n");
+  printf("Begin to dump system matrices...\n");
   dumpA("A", &A);
   dumpBL(model);
 
