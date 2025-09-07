@@ -49,6 +49,10 @@ def gcbl_gen(method):
     # if method == 'transient':
     #     save_npz('C.npz', C)
 
+    # Save in Matlab compatible format.
+    # To load the saved matrices:
+    # In Matlab, just use load('G.mat')
+    # In python, just use G = loadmat('G.mat')['G']
     savemat("G.mat", {'G':G})
     savemat("B.mat", {'B':B})
     savemat("L.mat", {'L':L})
@@ -66,16 +70,17 @@ def a_mat_gen(G, C, B, method):
     # set the power budgeting time step, works for transient GDP (A_bar)
     t_budget = 0.001
 
-    # G = load_npz('G.npz')
-    # C = load_npz('C.npz')
-    # B = load_npz('B.npz')
+    # G = loadmat('G.mat')['G']
+    # C = loadmat('C.mat')['C']
+    # B = loadmat('B.mat')['B']
 
     # compute A matrix for steady state GDP
     G_inv_B = spsolve(G, B.toarray()) # return G_inv_B is dense
     # G_inv_B = spsolve(G, B.toarray(), permc_spec='MMD_AT_PLUS_A') # 'MMD_AT_PLUS_A' is better than default 'COLAMD' tested in my large size case
     # import pypardiso;  G_inv_B = pypardiso.spsolve(G, B.toarray()) # this is much faster using intel MKL
     A = B.T @ G_inv_B # A is already dense
-    np.save('A.npy', A)
+    # np.save('A.npy', A)
+    savemat("A.mat", {'A':A})
 
     if method == 'transient':
         # compute A_bar matrix for transient GDP with power budget step t_budget
@@ -85,7 +90,8 @@ def a_mat_gen(G, C, B, method):
         Dc = np.zeros((A.shape[0], A.shape[0]))
         M, N, L, _, _ = cont2discrete((Ac, Bc, Cc, Dc), t_budget)
         A_bar = B.T @ N
-        np.save(f'A_{int(t_budget * 1000)}ms.npy', A_bar)
+        #np.save(f'A_{int(t_budget * 1000)}ms.npy', A_bar)
+        savemat(f'A_{int(t_budget * 1000)}ms.mat', {'A_bar':A_bar})
     elif method == 'steady':
         A_bar = np.zeros((0, 0)) # create a dummy matrix for return
     else:
