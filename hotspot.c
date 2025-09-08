@@ -811,9 +811,9 @@ int main(int argc, char **argv)
   fclose(pin);
   if (do_transient)
     fclose(tout);
-  delete_RC_model(model);
   if(!model->grid->has_lcf)
     free_flp(flp, FALSE);
+  delete_RC_model(model);
   if (do_transient)
     free_dvector(temp);
   free_dvector(power);

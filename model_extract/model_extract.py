@@ -1,7 +1,6 @@
 import sys
-
 import numpy as np
-from scipy.sparse import csc_matrix, spdiags, load_npz, save_npz
+from scipy.sparse import csc_matrix, spdiags
 from scipy.sparse.linalg import spsolve
 from scipy.signal import cont2discrete
 from scipy.io import loadmat, savemat
@@ -42,12 +41,6 @@ def gcbl_gen(method):
     shape_L = (int(Lmatrix[L_row-1, 0]), int(Lmatrix[L_row-1, 1]))
     L = csc_matrix((data_L, (row_ind_L, col_ind_L)), shape=shape_L)
     L = L.T
-
-    # save_npz('G.npz', G)
-    # save_npz('B.npz', B)
-    # save_npz('L.npz', L)
-    # if method == 'transient':
-    #     save_npz('C.npz', C)
 
     # Save in Matlab compatible format.
     # To load the saved matrices:
