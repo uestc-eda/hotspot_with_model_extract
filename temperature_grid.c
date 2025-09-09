@@ -284,8 +284,11 @@ int dumpBL(grid_model_t *model)
 		  // compute elem_val, which is the grid cell's area ratio in the block it belongs to
 		  // since a grid can belong to multiple blocks, first find the correct block
 		  blks_of_grid = model->layers[layer].b2gmap[blk_row][blk_col];
-		  while (blks_of_grid->idx != blk && blks_of_grid->next != NULL)
+		  while (blks_of_grid->idx != blk && blks_of_grid != NULL)
 		    blks_of_grid = blks_of_grid->next;
+		  // error if the previous loop does not find blk in the grid's block list
+		  if (blks_of_grid == NULL)
+		    fatal("dumpBL: block not found in the grid\n");
 		  // then compute elem_val, using the grid cell's area ratio in the correct block
 		  elem_val = blks_of_grid->occupancy * area / (model->layers[layer].flp->units[blk].width * model->layers[layer].flp->units[blk].height);
 		  
