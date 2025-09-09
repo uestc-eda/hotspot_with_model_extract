@@ -252,6 +252,8 @@ int dumpBL(grid_model_t *model)
   double elem_val;
   // number of the package thermal nodes that do not belong to the grid, located at the end of temperature vector
   int extra_nodes;
+  // pointer to the blocks that belong to a grid cell, note some grid cell may be shared by multiple blocks
+  blist_t *blks_of_grid = NULL;
   
   if (model->config.model_secondary)
     extra_nodes = EXTRA + EXTRA_SEC;
@@ -278,9 +280,15 @@ int dumpBL(grid_model_t *model)
 		{
 		  // elem_row is the grid cell's 1-D index of the x-y 2-D grid
 		  elem_row = layer*model->cols*model->rows + blk_row*model->rows + blk_col;
-		  // elem_val is the grid cell's area ratio in the block it belongs to
-		  elem_val = model->layers[layer].b2gmap[blk_row][blk_col]->occupancy * area / (model->layers[layer].flp->units[blk].width * 
-											     model->layers[layer].flp->units[blk].height);
+
+		  // compute elem_val, which is the grid cell's area ratio in the block it belongs to
+		  // since a grid can belong to multiple blocks, first find the correct block
+		  blks_of_grid = model->layers[layer].b2gmap[blk_row][blk_col];
+		  while (blks_of_grid->idx != blk && blks_of_grid->next != NULL)
+		    blks_of_grid = blks_of_grid->next;
+		  // then compute elem_val, using the grid cell's area ratio in the correct block
+		  elem_val = blks_of_grid->occupancy * area / (model->layers[layer].flp->units[blk].width * model->layers[layer].flp->units[blk].height);
+		  
 		  if (model->layers[layer].has_power) // only process layers with power for B
 		    {
 		      // Write to Bmatrix file. Note the row/col index starts at 0, should +1 if post-process in matlab
